@@ -37,6 +37,6 @@ jobs:
         with:
           push: true
           tags: ghcr.io/pixelbuildsrom-infra/prometheus_downloads_counter:${{ github.head_ref || github.ref_name }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
