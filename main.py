@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import os
 import requests
 
 from prometheus_client import start_http_server, Gauge, Summary
@@ -11,6 +12,9 @@ logging.basicConfig(
 )
 
 log = logging.getLogger()
+
+GITHUB_KEY = os.getenv("GITHUB_KEY")
+GITEA_KEY = os.getenv("GITEA_KEY")
 
 sleep_time = 60 * 15
 
@@ -34,19 +38,41 @@ def get_releases(device):
     releases_github = {}
     releases_gitea = {}
 
-    response_github = requests.get(
-        f"https://api.github.com/repos/PixelBuilds-Releases/{device}/releases"
-    )
+    try:
+        headers = {}
 
-    if response_github.status_code == 200:
+        if GITHUB_KEY:
+            headers["Authorization"] = f"Bearer {GITHUB_KEY}"
+
+        response_github = requests.get(
+            f"https://api.github.com/repos/PixelBuilds-Releases/{device}/releases",
+            headers=headers,
+            timeout=3,
+        )
+
+        assert response_github.status_code == 200, response_github.status_code
+
         releases_github = response_github.json()
+    except Exception as e:
+        log.exception(e)
 
-    response_gitea = requests.get(
-        f"https://git.pixelbuilds.org/api/v1/repos/releases/{device}/releases"
-    )
+    try:
+        headers = {}
 
-    if response_gitea.status_code == 200:
+        if GITEA_KEY:
+            headers["Authorization"] = f"token {GITEA_KEY}"
+
+        response_gitea = requests.get(
+            f"https://git.pixelbuilds.org/api/v1/repos/releases/{device}/releases",
+            headers=headers,
+            timeout=3,
+        )
+
+        assert response_gitea.status_code == 200, response_gitea.status_code
+
         releases_gitea = response_gitea.json()
+    except Exception as e:
+        log.exception(e)
 
     return releases_github, releases_gitea
 
